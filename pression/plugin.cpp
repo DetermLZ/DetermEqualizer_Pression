@@ -39,7 +39,7 @@ class Plugin
 public:
     CompressorInfos infos;
 };
-}
+} // namespace detail
 
 Plugin::Plugin(const std::string& libraryName)
     : DSO(libraryName)
@@ -69,7 +69,11 @@ Plugin::Plugin(const std::string& libraryName)
     , impl_(new detail::Plugin)
 {
     if (!isOpen())
+    {
+        LBDEBUG << "Failed to open library " << libraryName
+                << ", is it a valid plugin?" << std::endl;
         return;
+    }
 
     const GetInfo_t getInfo =
         getFunctionPointer<GetInfo_t>("EqCompressorGetInfo");
@@ -267,4 +271,4 @@ const CompressorInfos& Plugin::getInfos() const
 {
     return impl_->infos;
 }
-}
+} // namespace pression

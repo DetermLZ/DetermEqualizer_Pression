@@ -55,7 +55,7 @@ Plugin* _loadPlugin(const std::string& filename)
     delete plugin;
     return nullptr;
 }
-}
+} // namespace
 
 namespace detail
 {
@@ -149,6 +149,25 @@ public:
 
     bool loadFile(const std::string& filename)
     {
+        // check if the filename is in loadedPlugins
+        // the filename can be just the name of the plugin, or the full path
+        // get the plugin name if the filename is a full path
+        std::string pluginName = filename;
+        if (filename.find('/') != std::string::npos ||
+            filename.find('\\') != std::string::npos)
+        {
+            pluginName = filename.substr(filename.find_last_of("/\\") + 1);
+        }
+        // check if the pluginName is already loaded
+        for (const auto& loadedPlugin : loadedPlugins)
+        {
+            if (loadedPlugin.find(pluginName) != std::string::npos)
+            {
+                LBDEBUG << "Plugin already loaded: " << filename << std::endl;
+                return false;
+            }
+        }
+
         pression::Plugin* plugin = _loadPlugin(filename);
         if (!plugin)
             return false;
@@ -170,12 +189,16 @@ public:
         LBLOG(LOG_PLUGIN) << "Found " << plugin->getInfos().size()
                           << " compression engines in " << filename
                           << std::endl;
+        loadedPlugins.push_back(filename);
         return true;
     }
 
     Plugins plugins;
+
+    // record which plugins are loaded
+    std::vector<std::string> loadedPlugins;
 };
-}
+} // namespace detail
 
 PluginRegistry& PluginRegistry::getInstance()
 {
@@ -228,7 +251,7 @@ public:
 private:
     const uint32_t name_;
 };
-}
+} // namespace
 
 Plugin* PluginRegistry::findPlugin(const uint32_t name)
 {
@@ -283,4 +306,4 @@ const Plugins& PluginRegistry::getPlugins() const
 {
     return _impl->plugins;
 }
-}
+} // namespace pression
